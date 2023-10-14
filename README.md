@@ -75,9 +75,12 @@ Proper use of zRAM can more than double your effective RAM using compression w/o
 * **enable zRAM.**  [Enable Zram on Linux For Better System Performance](https://fosspost.org/enable-zram-on-linux-better-system-performance/) proides instructions for several distros.
 * **set your zram "DISKSIZE" to 150% of physical memory** (e.g., 6GB zRAM DISKSIZE for 4GB of physical RAM providing an effect RAM size of about 10GB) per [linux - Why does zram occupy much more memory compared to its "compressed" value? - Unix & Linux Stack Exchange](https://unix.stackexchange.com/questions/594817/why-does-zram-occupy-much-more-memory-compared-to-its-compressed-value).
 * **set your "VM" parameters** per [zRAM - ArchWiki](https://wiki.archlinux.org/title/Zram) as:
-    * vm.swappiness = 180
-    * vm.watermark_boost_factor = 0
-    * vm.watermark_scale_factor = 125
-    * vm.page-cluster = 0
+```
+    # add/replace these lines in /etc/sysctl.conf
+    vm.swappiness = 180
+    vm.watermark_boost_factor = 0
+    vm.watermark_scale_factor = 125
+    vm.page-cluster = 0
+```
 * **use `zramctl` to get more detail on zRAM use**. `swapon` provides the basics metrics; `zramctl` provides more if needed.
 * **tuning zRAM may be useful/necessary** especially for odd use cases.
