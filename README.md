@@ -71,8 +71,12 @@ rolls up memory use nicely (e.g., combining all the `firefox` processes).
 Proper use of zRAM can more than double your effective RAM using compression w/o using any disk swap. Once you start swapping to disk, your system can go into the toilet and slowly or never come back even if the workload abates.
 
 <u>Tips for configuration/using of zRAM</u>:
-* **disable any disk-based swap.**  In practice, you never want to swap to disk much anyhow; zRAM is so effective, you should not need to have any disk swap. See "Removing traditional swap partitions and files" in [Make swap better with zRAM on Linux | Opensource.com](https://opensource.com/article/22/11/customize-zram-linux)
-* **enable zRAM.**  [Enable Zram on Linux For Better System Performance](https://fosspost.org/enable-zram-on-linux-better-system-performance/) proides instructions for several distros.
+* **disable any disk-based swap.**  In practice, you never want to swap to disk much anyhow; zRAM is so effective, you should not need to have any disk swap. See "Removing traditional swap partitions and files" in [Make swap better with zRAM on Linux | Opensource.com](https://opensource.com/article/22/11/customize-zram-linux).
+* **enable zRAM.**  [Enable Zram on Linux For Better System Performance](https://fosspost.org/enable-zram-on-linux-better-system-performance/) proides instructions for several distros.  For example on Fedora where zRAM is pre-install, to set zRAM to 150% of physical memory:
+```
+    # on Fedora, edit /usr/lib/systemd/zram-generator.conf and set:
+    zram-size = ram * 1.5
+```
 * **set your zram "DISKSIZE" to 150% of physical memory** (e.g., 6GB zRAM DISKSIZE for 4GB of physical RAM providing an effect RAM size of about 10GB) per [linux - Why does zram occupy much more memory compared to its "compressed" value? - Unix & Linux Stack Exchange](https://unix.stackexchange.com/questions/594817/why-does-zram-occupy-much-more-memory-compared-to-its-compressed-value).
 * **set your "VM" parameters** per [zRAM - ArchWiki](https://wiki.archlinux.org/title/Zram) as:
 ```
