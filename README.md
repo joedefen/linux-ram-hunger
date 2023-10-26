@@ -69,9 +69,12 @@ rolls up memory use nicely (e.g., combining all the `firefox` processes).
 
 ## Increasing Your zRAM Potential
 Proper use of zRAM can more than double your effective RAM using compression w/o using any disk swap. Once you start swapping to disk, your system can go into the toilet and slowly or never come back even if the workload abates.
+zRAM is especially helpful on systems with low memory such as 2GB, 4GB or 8GB of RAM; with more RAM, it will help only if RAM is still inadequate.
 
 <u>Tips for configuration/using of zRAM</u>:
-* **disable any disk-based swap.**  In practice, you never want to swap to disk much anyhow; zRAM is so effective, you should not need to have any disk swap. See "Removing traditional swap partitions and files" in [Make swap better with zRAM on Linux | Opensource.com](https://opensource.com/article/22/11/customize-zram-linux).
+* **disable any disk-based swap.**  Genearlly, you do not want to swap to disk. See "Removing traditional swap partitions and files" in [Make swap better with zRAM on Linux | Opensource.com](https://opensource.com/article/22/11/customize-zram-linux). Note:
+   * There are reasons to configure both zRAM and a disk swap area (e.g., to configure hibernation, to permit even more virtual memory than allowed by zRAM alone, etc.) For that niche, seek appropriate guides, and be sure to set the priorty of zRAM greater than your disk swap area.
+
 * **enable zRAM.**  [Enable Zram on Linux For Better System Performance](https://fosspost.org/enable-zram-on-linux-better-system-performance/) proides instructions for several distros.
 * **set your zram "DISKSIZE" to 150% of physical memory** (e.g., 6GB zRAM DISKSIZE for 4GB of physical RAM providing an effect RAM size of about 10GB) per [linux - Why does zram occupy much more memory compared to its "compressed" value? - Unix & Linux Stack Exchange](https://unix.stackexchange.com/questions/594817/why-does-zram-occupy-much-more-memory-compared-to-its-compressed-value).  For example on Fedora where zRAM is pre-install, to set zRAM to 150% of physical memory:
 ```
