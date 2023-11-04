@@ -81,6 +81,7 @@ zRAM is especially helpful on systems with low memory such as 2GB, 4GB or 8GB of
     # on Fedora, edit /usr/lib/systemd/zram-generator.conf and set:
     zram-size = ram * 1.5
 ```
+>> But, don't gratuitously configure more zRAM than you'd ever use, because that adds some inefficiencies w/o benefit; e.g., if using 24GB is unimaginable having 16GB physical, then cap zRAM at 8GB.
 * **set your "VM" parameters** per [zRAM - ArchWiki](https://wiki.archlinux.org/title/Zram) as:
 ```
     # add/replace these lines in /etc/sysctl.conf
