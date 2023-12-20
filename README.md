@@ -87,11 +87,13 @@ Proper use of zRAM can more than double your effective RAM using compression w/o
 * **disable any disk-based swap.**  Generally, you do not want to swap to disk. See "Removing traditional swap partitions and files" in [Make swap better with zRAM on Linux | Opensource.com](https://opensource.com/article/22/11/customize-zram-linux). Note:
    * There are reasons to configure both zRAM and a disk swap area (e.g., to configure hibernation, to permit even more virtual memory than allowed by zRAM alone, etc.) For that niche, seek appropriate guides, and be sure to set the priorty of zRAM greater than your disk swap area.
 <br>
+
 * **enable zRAM.**  [Enable Zram on Linux For Better System Performance](https://fosspost.org/enable-zram-on-linux-better-system-performance/) provides instructions for several distros. Examples:
   * Fedora, Pop!_OS, and Endless OS: enabled on install.
   * Linux-Lite: enable with "Lite Tweaks" app.
   * Debian 12: `sudo apt install zram-tools`
 <br>
+
 * **set your zram "DISKSIZE" to 150% of physical memory (nominally)** (e.g., 6GB zRAM DISKSIZE for 4GB of physical RAM providing an effect RAM size of about 10GB) per [linux - Why does zram occupy much more memory compared to its "compressed" value?](https://unix.stackexchange.com/questions/594817/why-does-zram-occupy-much-more-memory-compared-to-its-compressed-value). Again, see in [Enable Zram on Linux For Better System Performance](https://fosspost.org/enable-zram-on-linux-better-system-performance/) for how to set zRAM size for several distros. Examples:
  
   * Fedora:  edit `/usr/lib/systemd/zram-generator.conf` and set `zram-size = ram * 1.5`
@@ -114,6 +116,7 @@ Proper use of zRAM can more than double your effective RAM using compression w/o
 
 * **reboot after making zRAM configuration changes** to ensure they take effect.
 <br>
+
 * **use `zramctl` to get more detail on zRAM use**. Compute your compression ratio as COMPR/DATA (so about 4 in the this example and your "DISKSIZE" can be set to `CompressionRatio*RAM/2` for full effect typically or 200% of RAM in this example).
 ```
     $ zramctl
