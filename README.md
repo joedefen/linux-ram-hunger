@@ -26,7 +26,8 @@ generally, the best indicators of inadequate memory for the workload are:
 
 *Notes*:
 * "available memory" is memory that is free or easily made free to run new apps or allow them more RAM; when near zero, then the system may seriously degrade, start killing apps, and/or freeze.  Usually, memory is made free by reducing the disk cache when can impact performance itself.
-* in the example above and if disk swapping, swapping 50% of total would indicate serious memory pressure and slow down (but if zRAM, that much or more is not a problem).
+* the OOM killer runs when you are out of both RAM and swap, 
+* in the example above and if disk swapping, swapping 50% of total would indicate serious memory pressure and likely slow down due to swap.
 * using ZFS, zRAM, and other features causes "available" to be understated.
 * "used" per `free` has changed several times (run `man free` to check):
   *  `used = total - available` since about mid-2023 (as seen above)
@@ -75,17 +76,19 @@ For a more complete explanation of `iostat`, visit [Understanding iostat · vane
 To address an out-of-ram condition, the primary choices are some combination of:
 * reduce your workload and memory demand,
 * increase your physical memory, or
-* increase your use of zRAM.
+* increase your use of zRAM or disk swap.
 
 ## Reducing Your Memory Demand
 To reduce the memory demand on your system, it is wise to locate the memory pigs. You can use top and htop, but I find those tools to be very iffy and often unhelpful. Instead, I use the proportional memory tool, [pmemstat](https://github.com/joedefen/pmemstat), for the analysis. Proportional memory metrics are more accurate than say, RSS, and `pmemstat` rolls up memory use nicely (e.g., combining all the `firefox` processes).
 
+In many case, your browser will be the memory hog; Chrome's Memory Saver feature and extensions like "Auto Tab Discard" can reduce browser memory by unloading tabs not actively in use.
+
 ## Increasing Your zRAM Potential
-Proper use of zRAM can more than double your effective RAM using compression w/o using any disk swap. Once you start swapping to disk, your system can go into the toilet and slowly or never come back even if the workload abates. zRAM is especially helpful on systems with low memory such as 2GB, 4GB or 8GB of RAM; with more RAM, it will help only if RAM is still inadequate.
+Proper use of zRAM can more than double your effective RAM using compression w/o using any disk swap. zRAM is especially helpful on systems with low memory such as 2GB, 4GB or 8GB of RAM AND with slower disks; with more RAM, it will help only if RAM is still inadequate.  zRAM costs CPU however, and sometimes it is actually better to swap to disk (e.g., swapping to NVMe disks).
 
 ***Tips for configuration/using of zRAM***:
-* **disable any disk-based swap.**  Generally, you do not want to swap to disk. See "Removing traditional swap partitions and files" in [Make swap better with zRAM on Linux | Opensource.com](https://opensource.com/article/22/11/customize-zram-linux). Note:
-   * There are reasons to configure both zRAM and a disk swap area (e.g., to configure hibernation, to permit even more virtual memory than allowed by zRAM alone, etc.) For that niche, seek appropriate guides, and be sure to set the priorty of zRAM greater than your disk swap area.
+* **optionally, disable any disk-based swap.**  When zRAM, you do not want to swap to disk, but it suffices to just set its swap priority higher than the disk swap. See "Removing traditional swap partitions and files" in [Make swap better with zRAM on Linux | Opensource.com](https://opensource.com/article/22/11/customize-zram-linux). Note:
+   * There are reasons to configure both zRAM and a disk swap area (e.g., to configure hibernation, to permit even more virtual memory than allowed by zRAM alone, etc.) For that niche, seek appropriate guides.
 <br>
 
 * **enable zRAM.**  [Enable Zram on Linux For Better System Performance](https://fosspost.org/enable-zram-on-linux-better-system-performance/) provides instructions for several distros. Examples:
@@ -117,10 +120,12 @@ Proper use of zRAM can more than double your effective RAM using compression w/o
 * **reboot after making zRAM configuration changes** to ensure they take effect.
 <br>
 
+## More zRAM Tips
 * **use `zramctl` to get more detail on zRAM use**. Compute your compression ratio as COMPR/DATA (so about 4 in the this example and your "DISKSIZE" can be set to `CompressionRatio*RAM/2` for full effect typically or 200% of RAM in this example).
 ```
     $ zramctl
     NAME       ALGORITHM DISKSIZE DATA  COMPR  TOTAL STREAMS MOUNTPOINT
     /dev/zram0 lz4           7.8G   2G 520.6M 545.1M       2 [SWAP]
-
 ```
+## Run zram-advisor to Check and Configure zRAM
+[zram-advisor](https://pypi.org/project/zram-advisor/) checks your currently running zRAM if any, and if desired, installs `fix-zram` to control and initialize zRAM on boot.
