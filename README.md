@@ -25,7 +25,9 @@ generally, the best indicators of inadequate memory for the workload are:
 * if disk swapping, "swap used" increases or fluctuates or is significant.
 
 *Notes*:
-* "available memory" is memory that is free or easily made free to run new apps or allow them more RAM; when near zero, then the system may seriously degrade, start killing apps, and/or freeze.  Usually, memory is made free by reducing the disk cache when can impact performance itself.
+* "available memory" is memory that is free or easily made free to run new apps or allow them more RAM;
+   when near zero, then the system may seriously degrade, start killing apps, and/or freeze.
+   Usually, memory is made free by reducing the disk cache which can impact performance itself.
 * the OOM killer runs when you are out of both RAM and swap, 
 * in the example above and if disk swapping, swapping 50% of total would indicate serious memory pressure and likely slow down due to swap.
 * using ZFS, zRAM, and other features causes "available" to be understated.
@@ -87,8 +89,17 @@ In many case, your browser will be the memory hog; Chrome's Memory Saver feature
 Proper use of zRAM can more than double your effective RAM using compression w/o using any disk swap. zRAM is especially helpful on systems with low memory such as 2GB, 4GB or 8GB of RAM AND with slower disks; with more RAM, it will help only if RAM is still inadequate.  zRAM costs CPU however, and sometimes it is actually better to swap to disk (e.g., swapping to NVMe disks).
 
 ***Tips for configuration/using of zRAM***:
-* **optionally, disable any disk-based swap.**  When zRAM, you do not want to swap to disk, but it suffices to just set its swap priority higher than the disk swap. See "Removing traditional swap partitions and files" in [Make swap better with zRAM on Linux | Opensource.com](https://opensource.com/article/22/11/customize-zram-linux). Note:
-   * There are reasons to configure both zRAM and a disk swap area (e.g., to configure hibernation, to permit even more virtual memory than allowed by zRAM alone, etc.) For that niche, seek appropriate guides.
+* **optionally, test whether zRAM is helpful before messing with anything.**  See the section at the end, 
+**"Test zRAM Before Changing Your Swap Configuration with zram-advisor"**.
+
+* **optionally, disable any disk-based swap.**  With zRAM, you do not want to swap to disk,
+  but it suffices to just set its swap priority higher than the disk swap.
+  See "Removing traditional swap partitions and files" in
+  [Make swap better with zRAM on Linux | Opensource.com](https://opensource.com/article/22/11/customize-zram-linux).
+  Note:
+   * There are reasons to configure both zRAM and a disk swap area (e.g., to configure hibernation,
+     to permit even more virtual memory than allowed by zRAM alone, etc.)
+     For those niches, seek appropriate guides.
 <br>
 
 * **enable zRAM.**  [Enable Zram on Linux For Better System Performance](https://fosspost.org/enable-zram-on-linux-better-system-performance/) provides instructions for several distros. Examples:
@@ -97,7 +108,7 @@ Proper use of zRAM can more than double your effective RAM using compression w/o
   * Debian 12: `sudo apt install zram-tools`
 <br>
 
-* **set your zram "DISKSIZE" to 150% of physical memory (nominally)** (e.g., 6GB zRAM DISKSIZE for 4GB of physical RAM providing an effect RAM size of about 10GB) per [linux - Why does zram occupy much more memory compared to its "compressed" value?](https://unix.stackexchange.com/questions/594817/why-does-zram-occupy-much-more-memory-compared-to-its-compressed-value). Again, see in [Enable Zram on Linux For Better System Performance](https://fosspost.org/enable-zram-on-linux-better-system-performance/) for how to set zRAM size for several distros. Examples:
+* **set your zram "DISKSIZE" to 150% of physical memory (nominally)** (e.g., 6GB zRAM DISKSIZE for 4GB of physical RAM providing an effective RAM size of about 10GB) per [linux - Why does zram occupy much more memory compared to its "compressed" value?](https://unix.stackexchange.com/questions/594817/why-does-zram-occupy-much-more-memory-compared-to-its-compressed-value). Again, see in [Enable Zram on Linux For Better System Performance](https://fosspost.org/enable-zram-on-linux-better-system-performance/) for how to set zRAM size for several distros. Examples:
  
   * Fedora:  edit `/usr/lib/systemd/zram-generator.conf` and set `zram-size = ram * 1.5`
   * Linux-Lite: edit `/usr/bin/init-zram-swapping` and set `mem=$((totalmem*2*1024))`
@@ -128,4 +139,20 @@ Proper use of zRAM can more than double your effective RAM using compression w/o
     /dev/zram0 lz4           7.8G   2G 520.6M 545.1M       2 [SWAP]
 ```
 ## Run zram-advisor to Check and Configure zRAM
-[zram-advisor](https://pypi.org/project/zram-advisor/) checks your currently running zRAM if any, and if desired, installs `fix-zram` to control and initialize zRAM on boot.
+[zram-advisor](https://pypi.org/project/zram-advisor/) checks your currently running zRAM if any,
+and if desired, installs `fix-zram` to control and initialize zRAM on boot.
+
+### Test zRAM Before Changing Your Swap Configuration with zram-advisor
+* Assuming your system has Python 3.11 or later, install `pipx` from your package manager if needed.
+* Run: `pipx install zram-advisor`
+* Run: `zram-advisor` : shows the zRAM configuration and statistics; presumably, it shows "NO zRAM".
+* Run: `zram-advisor --load` : starts zRAM and show its statistics; keep it running while testing.
+* Then test running with zRAM by driving the system as hard as when you suffer performance problems
+  and determine if better or worse.
+  * If worse, then just run `pipx uninstall zram-advisor` and reboot to remove all effects.
+  * If better, run `zram-advisor setup-fix-ram` which makes the changes persist through reboot
+    OR use the zRAM solution provided by your distro.
+
+This tests/installs only the `zram-advisor` defaults for zRAM.
+Some command examples above require `zram-advisor` at v1.1.1 or later.
+For details and more advanced use, see [zram-advisor](https://pypi.org/project/zram-advisor/).
