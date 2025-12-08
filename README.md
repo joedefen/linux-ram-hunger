@@ -28,6 +28,7 @@ generally, the best indicators of inadequate memory for the workload are:
 * "available memory" is memory that is free or easily made free to run new apps or allow them more RAM;
    when near zero, then the system may seriously degrade, start killing apps, and/or freeze.
    Usually, memory is made free by reducing the disk cache which can impact performance itself.
+  * in `free -h`, `available` is `total - used`.
 * the OOM killer runs when you are out of both RAM and swap, 
 * in the example above and if disk swapping, swapping 50% of total would indicate serious memory pressure and likely slow down due to swap.
 * using ZFS, zRAM, and other features causes "available" to be understated.
@@ -80,13 +81,22 @@ To address an out-of-ram condition, the primary choices are some combination of:
 * increase your physical memory, or
 * increase your use of zRAM or disk swap.
 
+zRAM is a layer before disk swap, designed to catch the "least-recently-used" (LRU) pages and compress them in RAM, preventing the often much slower trip to the physical disk.
+
 ## Reducing Your Memory Demand
 To reduce the memory demand on your system, it is wise to locate the memory pigs. You can use top and htop, but I find those tools to be very iffy and often unhelpful. Instead, I use the proportional memory tool, [pmemstat](https://github.com/joedefen/pmemstat), for the analysis. Proportional memory metrics are more accurate than say, RSS, and `pmemstat` rolls up memory use nicely (e.g., combining all the `firefox` processes).
 
-In many case, your browser will be the memory hog; Chrome's Memory Saver feature and extensions like "Auto Tab Discard" can reduce browser memory by unloading tabs not actively in use.
+In many cases, your browser is the memory hog; Chrome's Memory Saver feature and extensions like "Auto Tab Discard" can reduce browser memory by unloading tabs not actively in use.
 
 ## Increasing Your zRAM Potential
 Proper use of zRAM can more than double your effective RAM using compression w/o using any disk swap. zRAM is especially helpful on systems with low memory such as 2GB, 4GB or 8GB of RAM AND with slower disks; with more RAM, it will help only if RAM is still inadequate.  zRAM costs CPU however, and sometimes it is actually better to swap to disk (e.g., swapping to NVMe disks).
+
+| Feature	| zRAM  (Compressed RAM) | Disk Swap (Physical Disk) |
+| :------: | :------ | :------ |
+| Speed	| Very Fast (RAM access)	|Slow (Disk I/O) |
+| Resource Cost	|Higher CPU (for compression/decompression)	|Lower CPU |
+| Effective Memory	|Increases effective RAM	|Increases total virtual memory |
+| Best For	|Low-RAM systems, slow disks (HDD/SATA SSDs)	| Hibernation, very large workloads (with fast NVMe) |
 
 ***Tips for configuration/using of zRAM***:
 * **optionally, test whether zRAM is helpful before messing with anything.**  See the section at the end, 
@@ -127,12 +137,17 @@ Proper use of zRAM can more than double your effective RAM using compression w/o
     vm.watermark_scale_factor = 125
     vm.page-cluster = 0
 ```
+*NOTES*:
 
-* **reboot after making zRAM configuration changes** to ensure they take effect.
+* `vm.swappiness = 180`: This high value aggressively prioritizes swapping to the high-priority zRAM device before aggressively dropping the filesystem cache. The kernel's default priority logic means a value over 100 pushes data to zRAM first.
+* `vm.watermark_boost_factor = 0` and `vm.watermark_scale_factor = 125`: These relate to proactive swapping (reclaiming memory before it runs out).
+* These tweaks, combined, ensure the system is less aggressive at prematurely reclaiming memory outside of the zRAM zone.
+    
+> **reboot after making zRAM configuration changes** to ensure they take effect.
 <br>
 
 ## More zRAM Tips
-* **use `zramctl` to get more detail on zRAM use**. Compute your compression ratio as COMPR/DATA (so about 4 in the this example and your "DISKSIZE" can be set to `CompressionRatio*RAM/2` for full effect typically or 200% of RAM in this example).
+* **use `zramctl` to get more detail on zRAM use**. Compute your compression ratio as DATA/COMPR (so about 4 in the this example). For maximum effect, your "DISKSIZE" can be set to about `CompressionRatio*RAM/2` or 200% of RAM in this example.
 ```
     $ zramctl
     NAME       ALGORITHM DISKSIZE DATA  COMPR  TOTAL STREAMS MOUNTPOINT
