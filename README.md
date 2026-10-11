@@ -1,5 +1,5 @@
 # Linux RAM Hunger
-Do you suspect your Linux system is running out of memory?  These notes are intend to:
+Do you suspect your Linux system is running out of memory?  These notes are intended to:
 * help determine if there is a memory issue, and
 * if so, how to address it.
 
@@ -8,7 +8,7 @@ This is a humble attempt to modernize [Help! Linux ate my RAM!](https://www.linu
 ---
 
 # Localize the Problem
-Generally, you might visit here if your systems is sluggish and you suspect a memory issue. Firstly, determine whether sluggishness (or tanking) it is due memory pressure or something else.
+Generally, you might visit here if your system is sluggish and you suspect a memory issue. First, determine whether the sluggishness (or tanking) is due to memory pressure or something else.
 
 ## Am I Running Out of RAM?
 Referring to the output of `free -h`:
@@ -21,15 +21,15 @@ Swap:     7.8Gi     2.1Gi     5.7Gi
 
 generally, the best indicators of inadequate memory for the workload are:
 * "available" approaches 0, or
-* `dmesg | grep oom-killer` shows the out-of-memory-killer at work, or
+* `dmesg | grep -i oom` shows the out-of-memory-killer at work, or
 * if disk swapping, "swap used" increases or fluctuates or is significant.
 
 *Notes*:
 * "available memory" is memory that is free or easily made free to run new apps or allow them more RAM;
    when near zero, then the system may seriously degrade, start killing apps, and/or freeze.
    Usually, memory is made free by reducing the disk cache which can impact performance itself.
-  * in `free -h`, `available` is `total - used`.
-* the OOM killer runs when you are out of both RAM and swap, 
+  * in `free -h`, `available` is the kernel's estimate of memory usable by new apps.
+* the OOM killer runs when out of RAM and swap (or a cgroup limit),
 * in the example above and if disk swapping, swapping 50% of total would indicate serious memory pressure and likely slow down due to swap.
 * using ZFS, zRAM, and other features causes "available" to be understated.
 * "used" per `free` has changed several times (run `man free` to check):
@@ -68,8 +68,8 @@ zram0      0.00      0.00      0.00      0.00       0       0       0
 ```
 Observations:
 * `%idle` approaching 0 would indicate CPU bound
-* `$iowait` well above 0 would indicate I/O bound
-* `tps` approaching the capacity of the device also indicates I/O bound (e.g., 100 tps on a mechanical hard drive suggest I/O bound).
+* `%iowait` well above 0 would indicate I/O bound
+* `%util` near 100 or `tps` at the device's capacity also indicates I/O bound (e.g., ~100 tps on a mechanical hard drive).
 
 For a more complete explanation of `iostat`, visit [Understanding iostat · vaneyckt.io](https://vaneyckt.io/posts/understanding_iostat/). And if you are bottlenecked on anything except memory, then find another resource if necessary.  You may need to install `iostat` (e.g., `sudo apt install sysstat` on Debian).
 
@@ -118,14 +118,14 @@ Proper use of zRAM can more than double your effective RAM using compression w/o
   * Debian 12: `sudo apt install zram-tools`
 <br>
 
-* **set your zram "DISKSIZE" to 150% of physical memory (nominally)** (e.g., 6GB zRAM DISKSIZE for 4GB of physical RAM providing an effective RAM size of about 10GB) per [linux - Why does zram occupy much more memory compared to its "compressed" value?](https://unix.stackexchange.com/questions/594817/why-does-zram-occupy-much-more-memory-compared-to-its-compressed-value). Again, see in [Enable Zram on Linux For Better System Performance](https://fosspost.org/enable-zram-on-linux-better-system-performance/) for how to set zRAM size for several distros. Examples:
+* **set your zram "DISKSIZE" to 150-200% of physical memory** (150% is very conservative; 200% is very often suitable; e.g., 150% means 6GB zRAM for 4GB physical RAM) per [linux - Why does zram occupy much more memory compared to its "compressed" value?](https://unix.stackexchange.com/questions/594817/why-does-zram-occupy-much-more-memory-compared-to-its-compressed-value). Again, see in [Enable Zram on Linux For Better System Performance](https://fosspost.org/enable-zram-on-linux-better-system-performance/) for how to set zRAM size for several distros. Examples:
  
-  * Fedora:  edit `/usr/lib/systemd/zram-generator.conf` and set `zram-size = ram * 1.5`
+  * Fedora:  edit `/etc/systemd/zram-generator.conf` and set `zram-size = ram * 1.5` (up to `ram * 2`)
   * Linux-Lite: edit `/usr/bin/init-zram-swapping` and set `mem=$((totalmem*2*1024))`
   * Debian 12: edit `/etc/default/zramswap` and uncomment/set PERCENT=150, and run `sudo systemctl enable --now zramswap`
 
 >> * Don't gratuitously configure more zRAM than you'd ever use because that adds some inefficiencies w/o benefit; e.g., if using 24GB is unimaginable having 16GB physical, then cap zRAM at 8GB.
->> * But, on the lower end, 200% of RAM may be best (which is the amount Chromebooks configure.)
+>> * But on low-RAM systems, 200% of RAM is very often suitable.
 
 <br>
 
@@ -139,15 +139,15 @@ Proper use of zRAM can more than double your effective RAM using compression w/o
 ```
 *NOTES*:
 
-* `vm.swappiness = 180`: This high value aggressively prioritizes swapping to the high-priority zRAM device before aggressively dropping the filesystem cache. The kernel's default priority logic means a value over 100 pushes data to zRAM first.
+* `vm.swappiness = 180`: above 100 tells the kernel to reclaim anonymous pages (into fast zRAM) rather than drop the filesystem cache. Requires Linux 5.8+.
 * `vm.watermark_boost_factor = 0` and `vm.watermark_scale_factor = 125`: These relate to proactive swapping (reclaiming memory before it runs out).
 * These tweaks, combined, ensure the system is less aggressive at prematurely reclaiming memory outside of the zRAM zone.
     
-> **reboot after making zRAM configuration changes** to ensure they take effect.
+> **restart the zram service (or reboot) after zRAM configuration changes** to ensure they take effect.
 <br>
 
 ## More zRAM Tips
-* **use `zramctl` to get more detail on zRAM use**. Compute your compression ratio as DATA/COMPR (so about 4 in the this example). For maximum effect, your "DISKSIZE" can be set to about `CompressionRatio*RAM/2` or 200% of RAM in this example.
+* **use `zramctl` to get more detail on zRAM use**. Compute your compression ratio as DATA/COMPR (so about 4 in this example). For maximum effect, your "DISKSIZE" can be set to about `CompressionRatio*RAM/2` or 200% of RAM in this example.
 ```
     $ zramctl
     NAME       ALGORITHM DISKSIZE DATA  COMPR  TOTAL STREAMS MOUNTPOINT
