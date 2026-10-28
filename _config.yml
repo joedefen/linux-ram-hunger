@@ -1,5 +1,3 @@
-remote_theme: just-the-docs/just-the-docs
-plugins:
-  - jekyll-remote-theme
+theme: jekyll-theme-slate
 title: Linux RAM Hunger
 description: Advice for Solving Linux RAM Problems
