@@ -5,6 +5,10 @@ Do you suspect your Linux system is running out of memory?  These notes are inte
 
 This is a humble attempt to modernize [Help! Linux ate my RAM!](https://www.linuxatemyram.com/)
 
+> **📖 Published site:** [https://joedefen.github.io/linux-ram-hunger/](https://joedefen.github.io/linux-ram-hunger/)  
+> **🐛 Report issues / 💬 Discuss:** [GitHub Issues](https://github.com/joedefen/linux-ram-hunger/issues)  
+> **⭐ Like this project?** Please consider [starring the repo](https://github.com/joedefen/linux-ram-hunger)!
+
 ---
 
 # Localize the Problem
